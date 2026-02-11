@@ -22,3 +22,6 @@ for i in range(5):
     res = fa.string_belongs_to_language(word)
     status = "yes" if result else "no"
     print(f"'{s} -> {status}'")
+
+if __name__=='__main__':
+    main()
