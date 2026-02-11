@@ -14,9 +14,9 @@ class Grammar:
         current =self.start_symbol
         result = []
 
-        while corrent in self.productions:
+        while current in self.productions:
 
-            current=self.productions[current]
+            options=self.productions[current]
             chosen =random.choice(options)
             terminal = chosen[0]
             result.append(terminal)
@@ -37,12 +37,12 @@ class Grammar:
         for non_terminal, rules in self.productions.items():
             for rule in rules:
                 terminal = rule[0]
-                next_state = rule[1] if len(rule) == 3 else 'X'
+                next_state = rule[1] if len(rule) > 1 else 'X'
 
-                key=(non_termina, terminal)
+                key=(non_terminal, terminal)
                 if key not in transitions:
                     transitions[key] = []
                 transitions[key].append(next_state)
 
-            from finite_atomaton import to_finite_automation
-            return FiniteAutomation(states, alphabet, transitions, start_state, accept_states)
+        from finite_automation import FiniteAutomation
+        return FiniteAutomation(states, alphabet, transitions, start_state, accept_states)
