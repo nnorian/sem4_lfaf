@@ -22,7 +22,8 @@ class Grammar:
             result.append(terminal)
 
             if len(chosen) >1:
-                current = chosen[1] #next non terminal taken 
+                current = chosen[1] 
+                #next non terminal taken 
             else:
                 current = None #terminal only
         return ''.join(result)

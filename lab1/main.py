@@ -1,7 +1,7 @@
 from grammar import Grammar
 
 def main():
-    # Variant 14
+    # V 14
     vn = {'S', 'A', 'B'}
     vt = {'a', 'b', 'c'}
     productions = {
