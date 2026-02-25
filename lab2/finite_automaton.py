@@ -12,7 +12,7 @@ class FiniteAutomaton:
         self.sigma = set(sigma)
         self.delta = delta
         self.q0 = q0
-        self.F = self(F)
+        self.F = set(F)
 
 # 3b deterministic
 
@@ -34,7 +34,7 @@ class FiniteAutomaton:
             lhs = str(state).upper()
             for t in targets:
                 rhs_nt = str(t).upper()
-                P[lhs].append(f"{sym}")
+                P[lhs].append(f"{sym}{rhs_nt}")
 
         P = {k: list(dict.fromkeys(v)) for k, v in P.items() if v}
         return Grammar(VN, VT, P, S)
@@ -55,7 +55,7 @@ class FiniteAutomaton:
             visited.add(current)
 
             if current & self.F:
-                dfa_F.add(currrent)
+                dfa_F.add(current)
 
             for sym in self.sigma:
                 next_states = frozenset(
@@ -68,19 +68,19 @@ class FiniteAutomaton:
                 if next_states and next_states not in visited:
                     unvisited.append(next_states)
 
-# printing suff
-    def label(fs):
-        if not fs:  return "∅"
-        return "{" + ",".join(sorted(str(s) for s in fs)) + "}"
+        # printing stuff
+        def label(fs):
+            if not fs:  return "∅"
+            return "{" + ",".join(sorted(str(s) for s in fs)) + "}"
 
-    return FiniteAutomaton(
-        Q = [label(s) for s in visited],
-        sigma = self.sigma,
-        delta = {(label(s), sym): [label(t)]
-                    for (s, sym), [t] in dfa_delta.items()},
-        q0 = label(start_fs),
-        F = {label(s) for s in dfa_F}
-        )
+        return FiniteAutomaton(
+            Q = [label(s) for s in visited],
+            sigma = self.sigma,
+            delta = {(label(s), sym): [label(t)]
+                        for (s, sym), [t] in dfa_delta.items()},
+            q0 = label(start_fs),
+            F = {label(s) for s in dfa_F}
+            )
 
     def __str__(self):
         lines = [f"  States: {sorted(self.Q)}",

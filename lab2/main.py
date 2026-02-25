@@ -1,5 +1,8 @@
 # variant 14
 
+from finite_automaton import FiniteAutomaton
+from grammar import Grammar
+
 if __name__ == "__main__":
 
     ndfa = FiniteAutomaton(
@@ -16,12 +19,12 @@ if __name__ == "__main__":
         F = ['q2']
     )
 
-print(ndfa)
-det = ndfa.is_deterministic()
+    print(ndfa)
+    det = ndfa.is_deterministic()
 
-gram = ndfa.to_regular_grammar()
-print(gram)
+    gram = ndfa.to_regular_grammar()
+    print(gram)
 
-dfa = ndfa.to_dfa()
-print(dfa)
-print("{dfa.is_deterministic()}")
+    dfa = ndfa.to_dfa()
+    print(dfa)
+    print(f"{dfa.is_deterministic()}")

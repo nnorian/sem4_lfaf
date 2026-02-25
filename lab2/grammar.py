@@ -45,7 +45,7 @@ class Grammar:
 
     def _is_type1(self):
 
-        for lhs, rhss is self.p.items():
+        for lhs, rhss in self.P.items():
             for rhs in rhss:
                 if rhs == "ε":
                     if lhs == self.S:
@@ -58,5 +58,5 @@ class Grammar:
     def __str__(self):
         lines = []
         for lhs, rhss in self.P.items():
-            lines.append(f"{lhs} -> {' | '.join(ehss)}")
+            lines.append(f"{lhs} -> {' | '.join(rhss)}")
         return "\n". join(lines)
