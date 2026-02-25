@@ -16,6 +16,16 @@ each regular grammar has equivalent automata wich can be reciprocaly converted
 
 Implement a Grammar class that can generate valid strings and convert itself into a Finite Automaton. The Finite Automaton should then be able to verify whether a given string belongs to the language.
 
+in this code i an following the stepts of:
+
+a. Implement a type/class for my grammar
+
+b. Add one function that would generate 5 valid strings from the language expressed by my given grammar 
+
+c. Implement some functionality that would convert and object of type Grammar to one of type Finite Automaton
+
+d. For the Finite Automaton, adding a method that checks if an input string can be obtained via the state transition from it
+
 ## Implementation description
 
 The Grammar class stores non-terminals, terminals, production rules, and a start symbol. The generate_string method starts from the start symbol and repeatedly picks a random production rule, appending the terminal character and following the next non-terminal until a terminal-only production is chosen.
@@ -74,10 +84,27 @@ def string_belongs_to_language(self, input_string):
     return bool(current_states & self.accept_states)
 ```
 
+## Grammar to finite automaton conversion process
+
+Firstly we do the state mapping. Each non-terminal symbol becomes a state in the automaton. The accept state X does not correspond to any non-terminal. It is introduced to handle terminal-only productions like A → c, where the derivation ends without transitioning to another non-terminal. 
+
+then we do the transition table  where each production rule is converted into a transition. For a rule like S → bA, the transition is δ(S, b) = {A}, meaning from state S on input 'b', move to state A. For terminal-only rules like A → c, the transition becomes δ(A, c) = {X}, directing to the accept state.
+
+## Example case 
+
+Since the automaton is non-deterministic, the string_belongs_to_language method must track all possible states simultaneously. For example, processing the string "bcc":
+
+Start: current states = {S}
+Read 'b': δ(S, b) = {A} → current states = {A}
+Read 'c': δ(A, c) = {A, B, X} → current states = {A, B, X}
+Read 'c': δ(A, c) = {A, B, X}, δ(B, c) = ∅, δ(X, c) = ∅ → current states = {A, B, X}
+End: {A, B, X} ∩ {X} = {X} → accepted
+
 ## Conclusions
 
 correctly generates  Variant 14 grammar and validates using the finite automaton 
-All generated strings are accepted, and manually chosen invalid strings are properly rejected.
+
+All generated strings are accepted, and manually chosen invalid strings are properly rejected. The rejected ones as you can see from my wariant are the ones that end with anything else tha letter "c".
 
 
 ```
