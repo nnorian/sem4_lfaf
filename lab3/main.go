@@ -3,15 +3,13 @@ package main
 import (
 	"fmt"
 	"http-lexer/src/lexer"
-	"strings"
 )
 
 func main(){
 	samples := []struct{
-		label string 
+		label string
 		input string
-	}
-	{
+	}{
 		{
 			label: "Simple GET with query params",
 			input: "GET /search?q=golang&page=2&debug=true HTTP/1.1\nHost: example.com\nAccept: application/json",
@@ -39,7 +37,7 @@ func main(){
 			if tok.Type == lexer.TOKEN_EOF{
 				break
 			}
-			fmt.Printf(" %s/n", tok)
+			fmt.Printf(" %s\n", tok)
 		}
 		fmt.Println()
 	}
