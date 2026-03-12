@@ -8,15 +8,10 @@
 
 ## Theory
 
-Lexical analysis is the first stage of a compiler or interpreter pipeline. Its job is to read a raw string of characters and produce a flat sequence of **tokens** — structured units that carry both a *type* (category) and a *value* (the matched text).
+Lexical analysis is the first stage of a compiler or interpreter pipeline. Its job is to read a raw string of characters and produce a flat sequence of tokens structured units that carry both a type or otherwise category and a value aka the matched text.
 
-Key terms:
 
-- **Lexeme** — the raw substring extracted from the input (e.g. `GET`, `/api/users`, `42`).
-- **Token** — a `(type, value, position)` triple that gives a lexeme its meaning (e.g. `TOKEN_METHOD "GET"`).
-- **Lexer / Scanner / Tokenizer** — the automaton that performs this transformation.
-
-The lexer implemented here is a **Deterministic Finite Automaton (DFA)**. Every character consumed causes a state transition; the current state determines how the next character is interpreted. This maps directly to the formal definition of a DFA: `δ(state, input) → next_state`.
+The lexer implemented here is a Deterministic Finite Automaton . Every character consumed causes a state transition; the current state determines how the next character is interpreted. This maps directly to the formal definition of a DFA: `δ(state, input) → next_state`.
 
 ## Objectives
 
@@ -77,7 +72,7 @@ The automaton declares its states explicitly as a named type:
 type state int
 
 const (
-    STATE_START          state = iota
+    STATE_START state = iota
     STATE_REQUEST_LINE
     STATE_PATH
     STATE_QUERY_STRING
@@ -118,7 +113,7 @@ func (l *Lexer) Tokenise() []Token {
 
 ### Request Line Lexer
 
-The request line is tokenised in three ordered steps — method, path (with optional query string), then HTTP version:
+The request line is tokenised in three ordered steps, the method, path (with optional query string), then HTTP version:
 
 ```go
 func (l *Lexer) lexRequestLine() {
@@ -165,7 +160,7 @@ After reading the raw header value string, the lexer classifies it into the most
 
 ```go
 func (l *Lexer) lexHeaderValue() {
-    // ... collect raw string ...
+    //collect raw string
     switch {
     case raw == "true" || raw == "false":
         l.emit(TOKEN_BOOLEAN, raw, startLine, startCol)
@@ -272,17 +267,13 @@ X-Rate-Limit: 3.14
 X-Enabled: true
 ```
 
-`X-Rate-Limit: 3.14` → `TOKEN_FLOAT`, `X-Enabled: true` → `TOKEN_BOOLEAN`. The DFA transitions through `STATE_NUMBER` and detects the `.` to promote the result from integer to float.
+`X-Rate-Limit: 3.14` into `TOKEN_FLOAT`, `X-Enabled: true` into `TOKEN_BOOLEAN`. The DFA transitions through `STATE_NUMBER` and detects the `.` to promote the result from integer to float
 
 ## Conclusions
-
-- A **DFA-based lexer** is the cleanest implementation strategy for a structured text format like HTTP because every valid input character has an unambiguous next state, and the state machine can be written directly from the formal transition table.
-- Splitting the lexer into per-section sub-routines (`lexRequestLine`, `lexPath`, `lexQueryString`, `lexHeaderLine`) keeps each piece small and independently testable without losing the DFA property.
-- **Value-type inference** at the lexical level (INTEGER, FLOAT, BOOLEAN) adds useful semantic information early in the pipeline without requiring a separate parsing pass.
-- Tracking **line and column numbers** in every token costs almost nothing but is essential for meaningful error messages in any real compiler or tool.
+ A DFA-based lexer is the cleanest implementation strategy for a structured text format like HTTP because every valid input character has an unambiguous next state, and the state machine can be written directly from the formal transition table. Splitting the lexer into per-section sub-routines (`lexRequestLine`, `lexPath`, `lexQueryString`, `lexHeaderLine`) keeps each piece small and independently testable without losing the DFA property.Value-type inference at the lexical level (INTEGER, FLOAT, BOOLEAN) adds useful semantic information early in the pipeline without requiring a separate parsing pass. Tracking line and column numbers in every token costs almost nothing but is essential for meaningful error messages in any real compiler or tool.
 
 ## References
 
-1. Formal Languages and Finite Automata — course materials, TUM.
-2. Crafting Interpreters, R. Nystrom — https://craftinginterpreters.com (Chapter 4: Scanning).
-3. HTTP/1.1 Specification — RFC 9110.
+1. Formal Languages and Finite Automata — course materials, TUM
+2. Crafting Interpreters, R. Nystrom — https://craftinginterpreters.com (Chapter 4: Scanning)
+3. HTTP/1.1 Specification — RFC 9110
