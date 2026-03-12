@@ -74,7 +74,7 @@ for (state, sym), targets in self.delta.items():
     lhs = str(state).upper()
     for t in targets:
         rhs_nt = str(t).upper()
-        P[lhs].append(f"{sym}{rhs_nt}")   # A → aB
+        P[lhs].append(f"{sym}{rhs_nt}")   
 ```
 
 ## NDFA to DFA conversion — subset construction
@@ -142,9 +142,7 @@ DFA state    | on a       | on b    | on c
 ## Results
 
 ```
-=======================================================
-ORIGINAL AUTOMATON (Variant 14)
-=======================================================
+
   States: ['q0', 'q1', 'q2']
   Alphabet: ['a', 'b', 'c']
   Start: q0
@@ -157,7 +155,7 @@ ORIGINAL AUTOMATON (Variant 14)
     δ(q2, a) = ['q0']
 
 ─── Is Deterministic? ──────────────────────────────────
-  → False  (δ(q1,c) goes to both q1 and q2)
+   False  
 
 ─── Regular Grammar (from NDFA) ─────────────────────────
   Q0 -> aQ0 | bQ1
@@ -180,7 +178,6 @@ ORIGINAL AUTOMATON (Variant 14)
     δ({q0,q1}, b) = ['{q1}']
     δ({q0,q1}, c) = ['{q1,q2}']
 
-─── Is DFA Deterministic? ──────────────────────────────
   → True
 ```
 

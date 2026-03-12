@@ -6,6 +6,8 @@ q0 - start state
 F - set of final states
 """
 
+from grammar import Grammar
+
 class FiniteAutomaton:
     def __init__(self, Q, sigma, delta, q0, F):
         self.Q = set(Q)

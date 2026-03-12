@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     gram = ndfa.to_regular_grammar()
     print(gram)
+    print(gram.classify())
 
     dfa = ndfa.to_dfa()
     print(dfa)
