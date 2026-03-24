@@ -261,31 +261,8 @@ func quantStr(qk QuantifierKind, count int) string {
 
 //generator to make valid strings
 func Generate(n *Node) string {
-	var sb strings.Builder
-	generate(n, &sb)
-	return sb.String()
-}
-
-func generate(n *Node, sb *strings.Builder) {
-	switch n.Type {
-	case NodeLiteral:
-		sb.WriteRune(n.Char)
-
-	case NodeConcat:
-		for _, child := range n.Children {
-			generate(child, sb)
-		}
-
-	case NodeAlteration:
-		idx := rand.Intn(len(n.Children))
-		generate(n.Children[idx], sb)
-
-	case NodeQuantified:
-		count := pickCount(n.QKind, n.QCount)
-		for i := 0; i < count; i++ {
-			generate(n.Child, sb)
-		}
-	}
+	result, _ := GenerateWithTrace(n)
+	return result
 }
 
 func pickCount(qk QuantifierKind, exact int) int {
@@ -365,7 +342,6 @@ func main() {
 		"(H|I)(J|K)L*N?",
 	}
 
-	separator := strings.Repeat("─", 60)
 
 	for idx, re := range regexes {
 		fmt.Printf("  Regex #%d:  %s\n", idx+1, re)
@@ -376,22 +352,22 @@ func main() {
 		ast := parser.Parse()
 
 		//show ast
-		fmt.Printf("\n  ► AST: %s\n", ast.String())
+		fmt.Printf("\nAST: %s\n", ast.String())
 
 		//generate samples
-		fmt.Printf("\n  ► Generated samples (10 strings):\n")
+		fmt.Printf("\n10 generated samples:\n")
 		for i := 0; i < 10; i++ {
 			fmt.Printf("      %2d) %s\n", i+1, Generate(ast))
 		}
 
 		//bonus
 		result, trace := GenerateWithTrace(ast)
-		fmt.Printf("\n  ► Trace:\n")
+		fmt.Printf("\nTrace:\n")
 		for _, line := range trace {
 			fmt.Printf("      %s\n", line)
 		}
-		fmt.Printf("  Result: %s\n", result)
+		fmt.Printf("Result: %s\n", result)
 
-		fmt.Printf("\n%s\n", separator)
+
 	}
 }
