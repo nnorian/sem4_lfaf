@@ -144,3 +144,21 @@ func sortedSet(m map[string]bool) []string {
 //convert to chomsky normal form
 
 
+// bonus 
+// for that i took the example from the pdf 
+
+fmt.Printls("\n\n buns part: ")
+pdfExample := NewGrammar(
+		[]string{"S", "A", "B", "C", "D"},
+		[]string{"a", "b"},
+		"S",
+		map[string][]string{
+			"S": {"AC", "bA", "B", "aA"},
+			"A": {"", "aS", "ABAb"},
+			"B": {"a", "AbSA"},
+			"C": {"abC"},
+			"D": {"AB"},
+		},
+	)
+	ConvertToCNF(pdfExample)
+}
