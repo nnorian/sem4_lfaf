@@ -144,6 +144,32 @@ func sortedSet(m map[string]bool) []string {
 //convert to chomsky normal form
 
 // running all 5 steps tep by step
+func ConvertToCNF(g *Grammar) *Grammar{
+	g.Print("original grammar")
+	g1 := g.Step1()
+	g1.Print("done step 1")
+
+	g2 := g1.Step2()
+	g2.Print("done step 2")
+
+	g3 := g2.Step3()
+	g3.Print("done step 3")
+
+	g4 := g3.Step4()
+	g4.Print("done step 4")
+
+	g5 := g4.Step5()
+	g5.Print("final homsky normal form")
+
+	//final check
+	if g5.IsCNF(){
+		fmt.Println{"\n is valid chomsky normal form"}
+	}
+	else{
+		fmt.Println("\n there is a mistake, it does not comply toh the chomsky normal form")
+	}
+}
+
 
 
 //main
