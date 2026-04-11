@@ -1,58 +1,40 @@
 package lexer
 
 import (
+	"regexp"
 	"strings"
-	"unicode"
 )
 
-// each state represents a position
-type state int
-
-const (
-	STATE_START state = iota
-	STATE_REQUEST_LINE
-	STATE_HEADER
-	STATE_PATH
-	STATE_QUERY_STRING
-	STATE_QUERY_KEY
-	STATE_QUERY_VALUE
-	STATE_HTTP_VERSION
-	STATE_HEADER_NAME
-	STATE_HEADER_VALUE
-	STATE_NUMBER
-	STATE_QUOTED_STRING
-	STATE_DONE
+// compiled regexes used for token type classification
+var (
+	reMethod      = regexp.MustCompile(`^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS|CONNECT|TRACE)$`)
+	reHTTPVersion = regexp.MustCompile(`^HTTP/\d+(\.\d+)?$`)
+	reInteger     = regexp.MustCompile(`^[+-]?\d+$`)
+	reFloat       = regexp.MustCompile(`^[+-]?\d+\.\d+$`)
+	reBoolean     = regexp.MustCompile(`^(true|false)$`)
+	reQuoted      = regexp.MustCompile(`^".*"$`)
 )
 
-// http methods that the lexer will recognise
-var httpMethods = map[string]bool{
-	"GET": true, "POST": true, "PUT": true,
-	"DELETE": true, "PATCH": true, "HEAD": true,
-	"OPTIONS": true, "CONNECT": true, "TRACE": true,
-}
-
-// dfa state and input buffer
+// Lexer holds the DFA input buffer and cursor state
 type Lexer struct {
 	input  []rune
 	pos    int
 	line   int
 	col    int
-	state  state
 	tokens []Token
 }
 
-// creating lexer for the given http request string
+// New creates a Lexer for the given HTTP request string
 func New(input string) *Lexer {
 	return &Lexer{
 		input: []rune(input),
 		pos:   0,
 		line:  1,
 		col:   1,
-		state: STATE_START,
 	}
 }
 
-// returns current rune
+// peek returns the current rune without consuming it
 func (l *Lexer) peek() (rune, bool) {
 	if l.pos >= len(l.input) {
 		return 0, false
@@ -60,7 +42,7 @@ func (l *Lexer) peek() (rune, bool) {
 	return l.input[l.pos], true
 }
 
-// consume the current rune and moves cursor forward
+// advance consumes the current rune and moves the cursor forward
 func (l *Lexer) advance() rune {
 	ch := l.input[l.pos]
 	l.pos++
@@ -77,36 +59,33 @@ func (l *Lexer) emit(t TokenType, value string, line, col int) {
 	l.tokens = append(l.tokens, Token{Type: t, Value: value, Line: line, Col: col})
 }
 
-// runs the lexer and returns all tokens
+// Tokenise runs the lexer and returns all tokens
 func (l *Lexer) Tokenise() []Token {
-	// first line is the method path http and its version
 	l.lexRequestLine()
 
-	// every subsequent non empty line is a header
 	for {
 		ch, ok := l.peek()
 		if !ok {
 			break
 		}
-
 		if ch == '\n' || ch == '\r' {
 			l.skipNewlines()
 			continue
 		}
 		l.lexHeaderLine()
 	}
+
 	l.emit(TOKEN_EOF, "", l.line, l.col)
 	return l.tokens
 }
 
 func (l *Lexer) lexRequestLine() {
 	word, line, col := l.readWord()
-	if httpMethods[word] {
+	if reMethod.MatchString(word) {
 		l.emit(TOKEN_METHOD, word, line, col)
 	} else {
 		l.emit(TOKEN_UNKNOWN, word, line, col)
 	}
-
 	l.skipSpaces()
 	l.lexPath()
 	l.skipSpaces()
@@ -114,7 +93,6 @@ func (l *Lexer) lexRequestLine() {
 	l.skipNewlines()
 }
 
-// lexPath reads characters until a space or newline, splitting on '?' for query
 func (l *Lexer) lexPath() {
 	startLine, startCol := l.line, l.col
 	var sb strings.Builder
@@ -124,10 +102,8 @@ func (l *Lexer) lexPath() {
 		if !ok || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
 			break
 		}
-
 		if ch == '?' {
 			l.emit(TOKEN_PATH, sb.String(), startLine, startCol)
-			sb.Reset()
 			qLine, qCol := l.line, l.col
 			l.advance()
 			l.emit(TOKEN_QUERY_SEP, "?", qLine, qCol)
@@ -186,16 +162,14 @@ func (l *Lexer) lexQueryString() {
 	}
 }
 
-// reads the HTTP/x.y token
 func (l *Lexer) lexHTTPVersion() {
 	startLine, startCol := l.line, l.col
 	word := l.readUntilSpace()
-	if strings.HasPrefix(word, "HTTP/") {
+	if reHTTPVersion.MatchString(word) {
 		l.emit(TOKEN_HTTP_VERSION, word, startLine, startCol)
 	}
 }
 
-// header-name: header value
 func (l *Lexer) lexHeaderLine() {
 	nameLine, nameCol := l.line, l.col
 	var name strings.Builder
@@ -209,7 +183,6 @@ func (l *Lexer) lexHeaderLine() {
 	if name.Len() == 0 {
 		return
 	}
-
 	l.emit(TOKEN_HEADER_NAME, name.String(), nameLine, nameCol)
 
 	if ch, ok := l.peek(); ok && ch == ':' {
@@ -223,9 +196,7 @@ func (l *Lexer) lexHeaderLine() {
 	l.skipNewlines()
 }
 
-// lexHeaderValue reads the rest of the line and classifies sub-tokens
 func (l *Lexer) lexHeaderValue() {
-	// collect everything until end of line
 	startLine, startCol := l.line, l.col
 	var sb strings.Builder
 	for {
@@ -240,15 +211,14 @@ func (l *Lexer) lexHeaderValue() {
 		return
 	}
 
-	// classify value as known literal type
 	switch {
-	case raw == "true" || raw == "false":
+	case reBoolean.MatchString(raw):
 		l.emit(TOKEN_BOOLEAN, raw, startLine, startCol)
-	case isInteger(raw):
+	case reInteger.MatchString(raw):
 		l.emit(TOKEN_INTEGER, raw, startLine, startCol)
-	case isFloat(raw):
+	case reFloat.MatchString(raw):
 		l.emit(TOKEN_FLOAT, raw, startLine, startCol)
-	case len(raw) >= 2 && raw[0] == '"' && raw[len(raw)-1] == '"':
+	case reQuoted.MatchString(raw):
 		l.emit(TOKEN_QUOTED_STRING, raw, startLine, startCol)
 	default:
 		l.emit(TOKEN_HEADER_VALUE, raw, startLine, startCol)
@@ -260,7 +230,7 @@ func (l *Lexer) readWord() (string, int, int) {
 	var sb strings.Builder
 	for {
 		ch, ok := l.peek()
-		if !ok || unicode.IsSpace(ch) {
+		if !ok || ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' {
 			break
 		}
 		sb.WriteRune(l.advance())
@@ -268,7 +238,6 @@ func (l *Lexer) readWord() (string, int, int) {
 	return sb.String(), startLine, startCol
 }
 
-// read until whitespace or eof
 func (l *Lexer) readUntilSpace() string {
 	var sb strings.Builder
 	for {
@@ -281,7 +250,6 @@ func (l *Lexer) readUntilSpace() string {
 	return sb.String()
 }
 
-// skip horizontal spaces
 func (l *Lexer) skipSpaces() {
 	for {
 		ch, ok := l.peek()
@@ -292,7 +260,6 @@ func (l *Lexer) skipSpaces() {
 	}
 }
 
-// skip new lines \n and \r
 func (l *Lexer) skipNewlines() {
 	for {
 		ch, ok := l.peek()
@@ -301,51 +268,4 @@ func (l *Lexer) skipNewlines() {
 		}
 		l.advance()
 	}
-}
-
-// type classification helpers
-func isInteger(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
-	start := 0
-	if s[0] == '-' || s[0] == '+' {
-		start = 1
-	}
-	if start == len(s) {
-		return false
-	}
-	for _, ch := range s[start:] {
-		if ch < '0' || ch > '9' {
-			return false
-		}
-	}
-	return true
-}
-
-func isFloat(s string) bool {
-	if len(s) == 0 {
-		return false
-	}
-
-	dots := 0
-	start := 0
-	if s[0] == '-' || s[0] == '+' {
-		start = 1
-	}
-
-	if start == len(s) {
-		return false
-	}
-	for _, ch := range s[start:] {
-		if ch == '.' {
-			dots++
-			if dots > 1 {
-				return false
-			}
-		} else if ch < '0' || ch > '9' {
-			return false
-		}
-	}
-	return dots == 1
 }
