@@ -2,7 +2,7 @@ package lexer
 
 import "fmt"
 
-// categories
+// TokenType categorises each lexical unit
 type TokenType int
 
 const (
@@ -21,20 +21,17 @@ const (
 	TOKEN_COLON
 	TOKEN_HEADER_VALUE
 
-	// body
+	// typed literal values
 	TOKEN_INTEGER
 	TOKEN_FLOAT
 	TOKEN_BOOLEAN
 	TOKEN_QUOTED_STRING
 
 	// structure
-	TOKEN_NEWLINE
-	TOKEN_WHITESPACE
 	TOKEN_UNKNOWN
 	TOKEN_EOF
 )
 
-// tokenNames maps token type to human readable label
 var tokenNames = map[TokenType]string{
 	TOKEN_METHOD:        "METHOD",
 	TOKEN_PATH:          "PATH",
@@ -51,8 +48,6 @@ var tokenNames = map[TokenType]string{
 	TOKEN_FLOAT:         "FLOAT",
 	TOKEN_BOOLEAN:       "BOOLEAN",
 	TOKEN_QUOTED_STRING: "QUOTED_STRING",
-	TOKEN_NEWLINE:       "NEWLINE",
-	TOKEN_WHITESPACE:    "WHITESPACE",
 	TOKEN_UNKNOWN:       "UNKNOWN",
 	TOKEN_EOF:           "EOF",
 }
@@ -64,7 +59,7 @@ func (t TokenType) String() string {
 	return "UNKNOWN"
 }
 
-// Token represents a single lexical unit
+// Token represents a single lexical unit with source position
 type Token struct {
 	Type  TokenType
 	Value string
