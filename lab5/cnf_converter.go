@@ -143,6 +143,30 @@ func sortedSet(m map[string]bool) []string {
 //eliminating inaccessible symbols
 //convert to chomsky normal form
 
+
+//verification iscnf
+func (g *Grammar) IsCNF() bool {
+	for _, prods := range g.P {
+		for _, rhs := range prods {
+			syms := parseRHS(rhs)
+			switch len(syms){
+			case 1: 
+			if !g.VT[syms[0]]{
+				return false
+				// if that was a unit production and not cnf
+			}
+		case 2:
+			if !g.VN[syms[0]] || ! g.VN[syms[1]]{
+				return false
+				//should be two nonterminals
+			}
+		default:
+			return false
+			}
+		}
+	}
+}
+
 // running all 5 steps tep by step
 func ConvertToCNF(g *Grammar) *Grammar{
 	g.Print("original grammar")
