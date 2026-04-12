@@ -83,7 +83,7 @@ func lex(input string) []token {
         case r == ')':
             tokens = append(tokens, token{kind: tokRParen})
             i++
-        // ... other single-char tokens ...
+    
         default:
             if _, ok := superDigit[r]; ok {
                 val := 0
