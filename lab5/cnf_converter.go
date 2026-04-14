@@ -140,7 +140,11 @@ func sortedSet(m map[string]bool) []string {
 
 
 //step 2 eliminating renaming
-//eliminating inaccessible symbols
+//step 4 eliminating inaccessible symbols
+func (g *Grammar) Step4() *Grammar {
+	productive := make(map)
+}
+
 //step 5 convert to chomsky normal form
 func (g *Grammar) Step5() *Grammar {
 	ng := g.cloneShell()
