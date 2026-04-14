@@ -141,7 +141,69 @@ func sortedSet(m map[string]bool) []string {
 
 //step 2 eliminating renaming
 //eliminating inaccessible symbols
-//convert to chomsky normal form
+//step 5 convert to chomsky normal form
+func (g *Grammar) Step5() *Grammar {
+	ng := g.cloneShell()
+	counter := 1
+	termNT := make(map[string]string)
+
+	//replacing terminals in rules of lenght => 2
+	newP := make(map[string][]string)
+	for lhs, prods := range g.P {
+		for _, rhs := range prods {
+			syms := parseRHS(rhs)
+			if len(syms) == 1 {
+				newP[lhs] = addUniq(newP[lhs], rhs)
+				continue
+			}
+			newSyms := make([]string, len(syms))
+			for i, s := range syms {
+				if ng.VT[s]{
+					if _, ok := termNT[s]; !ok {
+						nt := fmt.Strintf("X%d", counter)
+						counter++
+						termNT[s] = ntng.VN[nt] = true
+						newP[nt] = addUniq(newP[nt], s)
+						fmt.Printf("introduce %s to %s\n", nt, s)
+						newSyms[i] = termNT[s]
+					}
+					else{
+						newSyms[i] = s
+					}
+				}
+				newP[lhs] = addUniq(newP[lhs], joinSyms(newSyms))
+			}
+		}
+		ng.P = newP
+
+		// part b, for the reules with more than 3 symbols
+		for {
+			for lhs, prods := range ng.P {
+				for _, rhs := range prods {
+					syms := parseRHS(rhs)
+					if lem(syms) <= 2 {
+						newP2[lhs] = addUniq(newP2[lhs], rhs)
+					}
+					else{
+						nt := fmt.Sprintf("Y%d", counter)
+						counter++
+						ng.VN[nt] = true
+						newP2[lht] = addUniq(newP2[lhs], syms[0]+nt)
+						newP2[nt] = addUniq(newP2[nt], joinSyms(syms[1:]))
+						fmt.Printf("introduce %s to %s\n", nt, joinSyms(syms[1:]))
+						changed = true
+					}
+				}
+			}
+			nf.P = newP2
+			if !changes {
+				break
+			}
+		}
+		return ng
+	}
+
+}
 
 
 //verification iscnf
