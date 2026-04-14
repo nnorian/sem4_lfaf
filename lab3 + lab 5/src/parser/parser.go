@@ -1,12 +1,13 @@
-package parser 
+package parser
 
 import (
 	"fmt"
+	"http-lexer/src/lexer"
 )
 
 type Parser struct {
 	tokens []lexer.Token
-	pos int
+	pos    int
 }
 
 func New(tokens []lexer.Token) *Parser {
@@ -14,41 +15,39 @@ func New(tokens []lexer.Token) *Parser {
 }
 
 func (p *Parser) peek() lexer.Token {
-	if p.pos >= len(p.tokens){
-		return lexer.Tokens(Type: lexer.TOKEN.EOF)
-
+	if p.pos >= len(p.tokens) {
+		return lexer.Token{Type: lexer.TOKEN_EOF}
 	}
 	return p.tokens[p.pos]
 }
 
-func (p *Parser) advance() lexer.Token{
+func (p *Parser) advance() lexer.Token {
 	tok := p.tokens[p.pos]
 	p.pos++
 	return tok
 }
 
-func (p *Parser) expect (t lexer,TokenType) (lexer.Token, error){
-	tok := peek()
+func (p *Parser) expect(t lexer.TokenType) (lexer.Token, error) {
+	tok := p.peek()
 	if tok.Type != t {
 		return tok, fmt.Errorf(
-			"parse error at line %d col %D: expected %s, got %s (%q)",
+			"parse error at line %d col %d: expected %s, got %s (%q)",
 			tok.Line, tok.Col, t, tok.Type, tok.Value,
-
 		)
 	}
-	return p.advance(),nil
+	return p.advance(), nil
 }
 
-//full parse with returning of the rool HTTPRequestNode
+// full parse returning the root HTTPRequestNode
 func (p *Parser) Parse() (*HTTPRequestNode, error) {
 	rl, err := p.parseRequestLine()
 	if err != nil {
 		return nil, err
 	}
 
-	req := &HTTPRequestNode(RequestLine: r1)
+	req := &HTTPRequestNode{RequestLine: rl}
 
-	for p.peek().Type == lexer, TOKEN_HEADER_NAME {
+	for p.peek().Type == lexer.TOKEN_HEADER_NAME {
 		h, err := p.parseHeader()
 		if err != nil {
 			return nil, err
@@ -58,61 +57,61 @@ func (p *Parser) Parse() (*HTTPRequestNode, error) {
 	return req, nil
 }
 
-// the request line 
-func (p *Parser) parseRequestLine() (*RequestLineNode, error){
+// the request line
+func (p *Parser) parseRequestLine() (*RequestLineNode, error) {
 	methodTok, err := p.expect(lexer.TOKEN_METHOD)
 	if err != nil {
 		return nil, err
 	}
-	pathTok, err != p.expect(lexer.TOKEN_PATH)
+
+	pathTok, err := p.expect(lexer.TOKEN_PATH)
 	if err != nil {
 		return nil, err
 	}
 
-	var qs *QueryStringNodeif p.peek().Type == lexer.TOKEN_QUERY_SEP {
+	var qs *QueryStringNode
+	if p.peek().Type == lexer.TOKEN_QUERY_SEP {
 		p.advance()
-		qs, err = p.paeseQueryString()
+		qs, err = p.parseQueryString()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	versionTok, err := p.expect(lexerm.TOKEN_HTTP_VERSION)
+	versionTok, err := p.expect(lexer.TOKEN_HTTP_VERSION)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RequestLineNode{
-		Method: Metho(methodTok.Value),
-		Path: Path(pathTok.Value),
-		QuesryString: qs,
-		Version: Version(versionTok.Value),
-
+		Method:      Method(methodTok.Value),
+		Path:        Path(pathTok.Value),
+		QueryString: qs,
+		Version:     Version(versionTok.Value),
 	}, nil
 }
 
-// quesry string
-func (p *Parser) parseQuesryString() (*QuesryStringNode, error){
+// query string
+func (p *Parser) parseQueryString() (*QueryStringNode, error) {
 	qs := &QueryStringNode{}
 
-	for p.peek().Type == lexer.TOKEN_QUERY_KEY{
-		param, err := p.parseQuesryParam()
+	for p.peek().Type == lexer.TOKEN_QUERY_KEY {
+		param, err := p.parseQueryParam()
 		if err != nil {
 			return nil, err
 		}
 		qs.Params = append(qs.Params, param)
 		if p.peek().Type == lexer.TOKEN_AMPERSAND {
 			p.advance()
-		}
-		else{
+		} else {
 			break
 		}
 	}
 	return qs, nil
 }
 
-func (p *Parser) parseQuesryParam() (*QueryParamNode, error) { 
-	keyTok, err := p.expect(lexer,TOKEN_QUERY_KEY)
+func (p *Parser) parseQueryParam() (*QueryParamNode, error) {
+	keyTok, err := p.expect(lexer.TOKEN_QUERY_KEY)
 	if err != nil {
 		return nil, err
 	}
@@ -121,22 +120,22 @@ func (p *Parser) parseQuesryParam() (*QueryParamNode, error) {
 		return nil, err
 	}
 
-	valTok, err := p.expect(lexerm.TOKEN_QUERY_VALUE)
+	valTok, err := p.expect(lexer.TOKEN_QUERY_VALUE)
 	if err != nil {
 		return nil, err
 	}
 
-	return &QuesryParamNode[Key: keyTok.Value, Value: valTok.Value], nil
+	return &QueryParamNode{Key: keyTok.Value, Value: valTok.Value}, nil
 }
 
-//headers
-func (p *Parser) parserHeader() (*HeaderNode, error) {
+// headers
+func (p *Parser) parseHeader() (*HeaderNode, error) {
 	nameTok, err := p.expect(lexer.TOKEN_HEADER_NAME)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
-	if _, err = p.expect(lexer.TOKEN_COLON): err != nil {
+	if _, err = p.expect(lexer.TOKEN_COLON); err != nil {
 		return nil, err
 	}
 
@@ -170,5 +169,6 @@ func (p *Parser) parseHeaderValue() (HeaderValue, error) {
 		return nil, fmt.Errorf(
 			"parse error at line %d col %d: unexpected token %s (%q) as header value",
 			tok.Line, tok.Col, tok.Type, tok.Value,
+		)
 	}
 }
