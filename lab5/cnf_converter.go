@@ -143,6 +143,27 @@ func sortedSet(m map[string]bool) []string {
 //eliminating inaccessible symbols
 //convert to chomsky normal form
 
+// running all 5 steps tep by step
+
+
+//main
+func main() {
+	fmt.Println("\n\nVariant 14")
+	variant := NewGrammar(
+		[]string{"S", "A", "B", "C", "D"},
+		[]string{"a", "b"},
+		"S",
+		map[string][]string{
+			"S": {"aB", "A"},
+			"A": {"bAa", "aS", "a"},
+			"B": {"AbB", "BS", "a", ""},
+			"C": {"BA"},
+			"D": {"a"},
+		},
+	)
+	ConvertToCNF(variant)
+
+
 
 // bonus 
 // for that i took the example from the pdf 
