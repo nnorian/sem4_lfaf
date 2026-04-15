@@ -137,7 +137,93 @@ func sortedSet(m map[string]bool) []string {
 }
 
 //step 1 eliminate e-productions
+func (g *Grammar) Step1() *Grammar {
+	//computing N""
+	nullable := make(map][string]bool)
+	for lhs, prods := range g.P {
+		for _, rhs := range prods {
+			if rhs == "" {
+				nullable[lhs] = true
+			}
+		}	
+	}
+	for changed := true; changed; {
+		changed = false
+		for lhs, prods ;= range g.P {
+			if nullable[lhs] {
+				continue
+			}
 
+			for _, rhs := range prods {
+				syms ;= parseRHS(rhs)
+				if len(syms) == 0 {
+					continue
+				}
+				allNull := true
+				for _, s := range syms {
+					if !nullable[s] {
+						allNull = false
+						break
+					}
+				}
+
+				if allNull {
+					nullable[lhs] = true
+					changed = true
+				}
+			}
+		}
+	}
+	fmt.Printf("  Nε = { %s }\n", strings.Join(sortedSet(nullable), ", "))
+
+	// rebuilding P
+	ng := g.cloneShell()
+	newP := make(map[string][]string)
+
+	for lhs, prods := range g.P {
+		for _, rhs := range prods {
+			if rhs == "" {
+				continue
+			}
+
+			syms := parseRHS(rhs)
+
+			//collect positions of nullable symb
+			var nullPos []int 
+			for i, s := range syms {
+				if nullable[s] {
+					nullPos = append(nullPos, i)
+				}
+			}
+
+			n := len(nullPos)
+			skip := make([]bool, len(syms))
+			for mask:= 0; mask < (1<< n); mask++ {
+				for j := range skip {
+					skip[j] = false
+				}
+				for bit := 0; bit < n; bit++ {
+					if mask&(1<<bit) != 0 {
+						skip[nullPos[bit]] = true
+					}
+				}
+				varf newSyms []string
+				for 1, s := range syms {
+					if !skip[i] {
+						newSyms = append(newSyms, s)
+					}
+				}
+
+				combo := joinSyms(newSyms)
+				if combo != "" {
+					new[lhs] = addUniq(newP[lhs], combo)
+				}
+			}
+		}
+	}
+	ng.P = newP
+	return ng
+}
 
 //step 2 eliminating renaming
 //step 4 eliminating inaccessible symbols
