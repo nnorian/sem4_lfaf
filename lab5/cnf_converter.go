@@ -279,6 +279,66 @@ func (g *Grammar) Step2() *Grammar {
 	}	
 }
 
+//step 3 we eliminate inacessible symbols
+func (g *Grammar) Step3() *Grammar {
+	accessible := map[string]bool{g.Start: true}
+	for changed := true; changed; {
+		changed = false
+		for lhs := range g.P {
+			if !accessible[lhs] {
+				continue
+			}
+			for _, rhs := range g.P[lhs] {
+				for _, s := range parseRHS(rhs) {
+					if !accessible[s] {
+						accessible[s] = true
+						changed = true
+					}
+				}
+			}
+		}
+	}
+
+	var inacc []string
+	for nt := range g.VN {
+		if !accessible[nt] {
+			inacc = append(inacc, t)
+		}
+	}
+
+	sort.Strings(inacc)
+	if len(inacc) == 0 {
+		fmt,Println("Inaccessible: {} (none)")
+	}
+	else{
+		fmt.Printf("Inaccessible: { %s }\n", strings.Join(inacc, ", "))
+	}
+
+	ng := g.Clone()
+	for _, s := range inacc {
+		delete(ng.VN, s)
+		delete(ng.VT, s)
+		delete(ng.P, s)
+	}
+
+	for lhs, prods := range ng.P {
+		var kept []string
+		for _, rhs := range prods {
+			ok := true
+			for _, s := range parseRHS(rhs) {
+				if !ng.VN[s] && !ng.VT[s] {
+					ok = falsebreak
+				}
+			}
+			if ok {
+				kept = append(kept, rhs)
+			}
+		}
+		ng.P[lhs] = kept
+	}
+	return ng
+}
+
 //step 4 eliminating inaccessible symbols
 func (g *Grammar) Step4() *Grammar {
 	productive := make(map)
