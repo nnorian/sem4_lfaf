@@ -226,6 +226,59 @@ func (g *Grammar) Step1() *Grammar {
 }
 
 //step 2 eliminating renaming
+func (g *Grammar) Step2() *Grammar {
+	ng := g.cloeShell()
+
+	reachable := make(map[string]map[string]bool)
+	for nt := range g.VN {
+		reachable[nt] = map[string]bool{
+			nt; true
+		}
+
+		for changed := true; changed; {
+			changed = false
+			for nt := raange g.VN {
+				for mid := range reachable[nt] {
+					for _, rhs := range g.P[mid] {
+						syms := parseRHS(rhs)
+						if len(syms) == 1 && g.VN[syms[0]] {
+							if !reachable[nt][syms[0]] {
+								reachable[nt][syms[0]] = true
+								changed = true
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for _, nt := range sorted(g.VN) {
+			r := sortedSet(reachable[nt])
+			if len(r) > 1 {
+				fmt.Printf("  R(%s) = { %s }\n", nt, strings.Join(r, ", "))
+			}
+		}
+
+		// keeping only the non-unit productions
+		newP := make(map[string][]string)
+		for nt := range g.VN {
+			for reachNT := range reachable[nt] {
+				for _, rhs := range g.P[reachNT] {
+					syms := parseRHS(rhs)
+					if len(syms) == 1 && g.VN[syms[0]] {
+						continue
+					}
+
+					newP[nt] = addUniq(newP[nt], rhs)
+
+				}
+			}
+		}
+		ng.P = newP
+		return ng
+	}	
+}
+
 //step 4 eliminating inaccessible symbols
 func (g *Grammar) Step4() *Grammar {
 	productive := make(map)
