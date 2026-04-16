@@ -1,31 +1,27 @@
 // v14
 
+package main
 
-package main 
 import (
 	"fmt"
 	"sort"
 	"strings"
 )
 
-//implementation of the context free grammar
-//"" represents e 
+// implementation of the context free grammar
+// "" represents ε
 type Grammar struct {
-	VN map [string]bool
-	// non terminal
-	VT  map[string]bool
-	// terminal
-	P map[string]string
-	// production rules
-	Start string 
+	VN    map[string]bool
+	VT    map[string]bool
+	P     map[string][]string
+	Start string
 }
-
 
 func NewGrammar(vn, vt []string, start string, prods map[string][]string) *Grammar {
 	g := &Grammar{
-		VN: make(map[string]bool),
-		VT: make(map[string]bool),
-		P: make(map[string]string),
+		VN:    make(map[string]bool),
+		VT:    make(map[string]bool),
+		P:     make(map[string][]string),
 		Start: start,
 	}
 	for _, s := range vn {
@@ -34,22 +30,21 @@ func NewGrammar(vn, vt []string, start string, prods map[string][]string) *Gramm
 	for _, s := range vt {
 		g.VT[s] = true
 	}
-	for lhs, rh := range prods {
+	for lhs, rhs := range prods {
 		g.P[lhs] = append([]string{}, rhs...)
 	}
 	return g
 }
 
-// steps 1, 2, 5
 func (g *Grammar) cloneShell() *Grammar {
 	ng := &Grammar{
-		VN: make(map[string]bool),
-		VT: make(map[string]bool),
-		P: make(map[string]string),
+		VN:    make(map[string]bool),
+		VT:    make(map[string]bool),
+		P:     make(map[string][]string),
 		Start: g.Start,
 	}
 	for k := range g.VN {
-		gn.VN[k] = true
+		ng.VN[k] = true
 	}
 	for k := range g.VT {
 		ng.VT[k] = true
@@ -57,7 +52,6 @@ func (g *Grammar) cloneShell() *Grammar {
 	return ng
 }
 
-// steps 3, 4
 func (g *Grammar) Clone() *Grammar {
 	ng := g.cloneShell()
 	for k, v := range g.P {
@@ -65,7 +59,8 @@ func (g *Grammar) Clone() *Grammar {
 	}
 	return ng
 }
-//print 
+
+// print
 func (g *Grammar) Print(title string) {
 	fmt.Printf("\n%s\n", title)
 	fmt.Printf("  VN = { %s }\n  VT = { %s }\n  S  = %s\n  P  = {\n",
@@ -86,36 +81,35 @@ func (g *Grammar) Print(title string) {
 	fmt.Println("  }")
 }
 
-// splitting rhs string is symbol tokens
-func parseRHS(rhs string) []string{
+// splitting rhs string into symbol tokens
+func parseRHS(rhs string) []string {
 	if rhs == "" {
 		return nil
-
 	}
 	var syms []string
 	i := 0
 	for i < len(rhs) {
 		c := rhs[i]
 		if c >= 'A' && c <= 'Z' {
-			j := i + 1 
+			j := i + 1
 			for j < len(rhs) && rhs[j] >= '0' && rhs[j] <= '9' {
 				j++
 			}
 			syms = append(syms, rhs[i:j])
-			i = j 
-
-		}
-		else {
+			i = j
+		} else {
 			syms = append(syms, string(c))
 			i++
 		}
 	}
+	return syms
 }
 
-funct joinSyms(syms []string) string {
+func joinSyms(syms []string) string {
 	return strings.Join(syms, "")
 }
-// s is appended to the slice only if it is not already present 
+
+// s is appended to the slice only if it is not already present
 func addUniq(slice []string, s string) []string {
 	for _, x := range slice {
 		if x == s {
@@ -126,36 +120,42 @@ func addUniq(slice []string, s string) []string {
 }
 
 func sortedSet(m map[string]bool) []string {
-	keys := make[map[string]bool] []string{
-		keys ;= make([]string, 0, len(m))
-		for k := range m {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		return keys
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
 	}
+	sort.Strings(keys)
+	return keys
 }
 
-//step 1 eliminate e-productions
+func sortedKeys(m map[string][]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// step 1: eliminate ε-productions
 func (g *Grammar) Step1() *Grammar {
-	//computing N""
-	nullable := make(map][string]bool)
+	// computing Nε
+	nullable := make(map[string]bool)
 	for lhs, prods := range g.P {
 		for _, rhs := range prods {
 			if rhs == "" {
 				nullable[lhs] = true
 			}
-		}	
+		}
 	}
 	for changed := true; changed; {
 		changed = false
-		for lhs, prods ;= range g.P {
+		for lhs, prods := range g.P {
 			if nullable[lhs] {
 				continue
 			}
-
 			for _, rhs := range prods {
-				syms ;= parseRHS(rhs)
+				syms := parseRHS(rhs)
 				if len(syms) == 0 {
 					continue
 				}
@@ -166,7 +166,6 @@ func (g *Grammar) Step1() *Grammar {
 						break
 					}
 				}
-
 				if allNull {
 					nullable[lhs] = true
 					changed = true
@@ -185,11 +184,10 @@ func (g *Grammar) Step1() *Grammar {
 			if rhs == "" {
 				continue
 			}
-
 			syms := parseRHS(rhs)
 
-			//collect positions of nullable symb
-			var nullPos []int 
+			// collect positions of nullable symbols
+			var nullPos []int
 			for i, s := range syms {
 				if nullable[s] {
 					nullPos = append(nullPos, i)
@@ -198,7 +196,7 @@ func (g *Grammar) Step1() *Grammar {
 
 			n := len(nullPos)
 			skip := make([]bool, len(syms))
-			for mask:= 0; mask < (1<< n); mask++ {
+			for mask := 0; mask < (1 << n); mask++ {
 				for j := range skip {
 					skip[j] = false
 				}
@@ -207,16 +205,15 @@ func (g *Grammar) Step1() *Grammar {
 						skip[nullPos[bit]] = true
 					}
 				}
-				varf newSyms []string
-				for 1, s := range syms {
+				var newSyms []string
+				for i, s := range syms {
 					if !skip[i] {
 						newSyms = append(newSyms, s)
 					}
 				}
-
 				combo := joinSyms(newSyms)
 				if combo != "" {
-					new[lhs] = addUniq(newP[lhs], combo)
+					newP[lhs] = addUniq(newP[lhs], combo)
 				}
 			}
 		}
@@ -225,61 +222,57 @@ func (g *Grammar) Step1() *Grammar {
 	return ng
 }
 
-//step 2 eliminating renaming
+// step 2: eliminate renaming (unit productions)
 func (g *Grammar) Step2() *Grammar {
-	ng := g.cloeShell()
+	ng := g.cloneShell()
 
 	reachable := make(map[string]map[string]bool)
 	for nt := range g.VN {
-		reachable[nt] = map[string]bool{
-			nt; true
-		}
+		reachable[nt] = map[string]bool{nt: true}
+	}
 
-		for changed := true; changed; {
-			changed = false
-			for nt := raange g.VN {
-				for mid := range reachable[nt] {
-					for _, rhs := range g.P[mid] {
-						syms := parseRHS(rhs)
-						if len(syms) == 1 && g.VN[syms[0]] {
-							if !reachable[nt][syms[0]] {
-								reachable[nt][syms[0]] = true
-								changed = true
-							}
+	for changed := true; changed; {
+		changed = false
+		for nt := range g.VN {
+			for mid := range reachable[nt] {
+				for _, rhs := range g.P[mid] {
+					syms := parseRHS(rhs)
+					if len(syms) == 1 && g.VN[syms[0]] {
+						if !reachable[nt][syms[0]] {
+							reachable[nt][syms[0]] = true
+							changed = true
 						}
 					}
 				}
 			}
 		}
+	}
 
-		for _, nt := range sorted(g.VN) {
-			r := sortedSet(reachable[nt])
-			if len(r) > 1 {
-				fmt.Printf("  R(%s) = { %s }\n", nt, strings.Join(r, ", "))
-			}
+	for _, nt := range sortedSet(g.VN) {
+		r := sortedSet(reachable[nt])
+		if len(r) > 1 {
+			fmt.Printf("  R(%s) = { %s }\n", nt, strings.Join(r, ", "))
 		}
+	}
 
-		// keeping only the non-unit productions
-		newP := make(map[string][]string)
-		for nt := range g.VN {
-			for reachNT := range reachable[nt] {
-				for _, rhs := range g.P[reachNT] {
-					syms := parseRHS(rhs)
-					if len(syms) == 1 && g.VN[syms[0]] {
-						continue
-					}
-
-					newP[nt] = addUniq(newP[nt], rhs)
-
+	// keeping only the non-unit productions
+	newP := make(map[string][]string)
+	for nt := range g.VN {
+		for reachNT := range reachable[nt] {
+			for _, rhs := range g.P[reachNT] {
+				syms := parseRHS(rhs)
+				if len(syms) == 1 && g.VN[syms[0]] {
+					continue
 				}
+				newP[nt] = addUniq(newP[nt], rhs)
 			}
 		}
-		ng.P = newP
-		return ng
-	}	
+	}
+	ng.P = newP
+	return ng
 }
 
-//step 3 we eliminate inacessible symbols
+// step 3: eliminate inaccessible symbols
 func (g *Grammar) Step3() *Grammar {
 	accessible := map[string]bool{g.Start: true}
 	for changed := true; changed; {
@@ -302,15 +295,14 @@ func (g *Grammar) Step3() *Grammar {
 	var inacc []string
 	for nt := range g.VN {
 		if !accessible[nt] {
-			inacc = append(inacc, t)
+			inacc = append(inacc, nt)
 		}
 	}
 
 	sort.Strings(inacc)
 	if len(inacc) == 0 {
-		fmt,Println("Inaccessible: {} (none)")
-	}
-	else{
+		fmt.Println("Inaccessible: {} (none)")
+	} else {
 		fmt.Printf("Inaccessible: { %s }\n", strings.Join(inacc, ", "))
 	}
 
@@ -327,7 +319,8 @@ func (g *Grammar) Step3() *Grammar {
 			ok := true
 			for _, s := range parseRHS(rhs) {
 				if !ng.VN[s] && !ng.VT[s] {
-					ok = falsebreak
+					ok = false
+					break
 				}
 			}
 			if ok {
@@ -339,19 +332,18 @@ func (g *Grammar) Step3() *Grammar {
 	return ng
 }
 
-//step 4 eliminating inaccessible symbols
+// step 4: eliminate non-productive symbols
 func (g *Grammar) Step4() *Grammar {
 	productive := make(map[string]bool)
 	for t := range g.VT {
-		productive[t] true 
+		productive[t] = true
 	}
 	for changed := true; changed; {
-		changed = false 
+		changed = false
 		for lhs, prods := range g.P {
 			if productive[lhs] {
 				continue
 			}
-
 			for _, rhs := range prods {
 				allProd := true
 				for _, s := range parseRHS(rhs) {
@@ -368,17 +360,17 @@ func (g *Grammar) Step4() *Grammar {
 			}
 		}
 	}
-	var nonProd []stringfor nt := range g.VN {
+
+	var nonProd []string
+	for nt := range g.VN {
 		if !productive[nt] {
-			nonProd = append(nonProd, nt)		
+			nonProd = append(nonProd, nt)
 		}
 	}
 	sort.Strings(nonProd)
 	if len(nonProd) == 0 {
 		fmt.Println("non-productive: {}")
-
-	}
-	else{
+	} else {
 		fmt.Printf("non-productive: { %s }\n", strings.Join(nonProd, ", "))
 	}
 
@@ -388,7 +380,7 @@ func (g *Grammar) Step4() *Grammar {
 		delete(ng.P, nt)
 	}
 	for lhs, prods := range ng.P {
-		var kept []string 
+		var kept []string
 		for _, rhs := range prods {
 			ok := true
 			for _, s := range parseRHS(rhs) {
@@ -406,13 +398,13 @@ func (g *Grammar) Step4() *Grammar {
 	return ng
 }
 
-//step 5 convert to chomsky normal form
+// step 5: convert to Chomsky Normal Form
 func (g *Grammar) Step5() *Grammar {
 	ng := g.cloneShell()
 	counter := 1
 	termNT := make(map[string]string)
 
-	//replacing terminals in rules of lenght => 2
+	// part a: replace terminals in rules of length >= 2
 	newP := make(map[string][]string)
 	for lhs, prods := range g.P {
 		for _, rhs := range prods {
@@ -423,79 +415,77 @@ func (g *Grammar) Step5() *Grammar {
 			}
 			newSyms := make([]string, len(syms))
 			for i, s := range syms {
-				if ng.VT[s]{
+				if ng.VT[s] {
 					if _, ok := termNT[s]; !ok {
-						nt := fmt.Strintf("X%d", counter)
+						nt := fmt.Sprintf("X%d", counter)
 						counter++
-						termNT[s] = ntng.VN[nt] = true
-						newP[nt] = addUniq(newP[nt], s)
-						fmt.Printf("introduce %s to %s\n", nt, s)
-						newSyms[i] = termNT[s]
-					}
-					else{
-						newSyms[i] = s
-					}
-				}
-				newP[lhs] = addUniq(newP[lhs], joinSyms(newSyms))
-			}
-		}
-		ng.P = newP
-
-		// part b, for the reules with more than 3 symbols
-		for {
-			for lhs, prods := range ng.P {
-				for _, rhs := range prods {
-					syms := parseRHS(rhs)
-					if lem(syms) <= 2 {
-						newP2[lhs] = addUniq(newP2[lhs], rhs)
-					}
-					else{
-						nt := fmt.Sprintf("Y%d", counter)
-						counter++
+						termNT[s] = nt
 						ng.VN[nt] = true
-						newP2[lht] = addUniq(newP2[lhs], syms[0]+nt)
-						newP2[nt] = addUniq(newP2[nt], joinSyms(syms[1:]))
-						fmt.Printf("introduce %s to %s\n", nt, joinSyms(syms[1:]))
-						changed = true
+						newP[nt] = addUniq(newP[nt], s)
+						fmt.Printf("introduce %s → %s\n", nt, s)
 					}
+					newSyms[i] = termNT[s]
+				} else {
+					newSyms[i] = s
 				}
 			}
-			nf.P = newP2
-			if !changes {
-				break
+			newP[lhs] = addUniq(newP[lhs], joinSyms(newSyms))
+		}
+	}
+	ng.P = newP
+
+	// part b: break rules with more than 2 symbols
+	for {
+		changed := false
+		newP2 := make(map[string][]string)
+		for lhs, prods := range ng.P {
+			for _, rhs := range prods {
+				syms := parseRHS(rhs)
+				if len(syms) <= 2 {
+					newP2[lhs] = addUniq(newP2[lhs], rhs)
+				} else {
+					nt := fmt.Sprintf("Y%d", counter)
+					counter++
+					ng.VN[nt] = true
+					newP2[lhs] = addUniq(newP2[lhs], syms[0]+nt)
+					newP2[nt] = addUniq(newP2[nt], joinSyms(syms[1:]))
+					fmt.Printf("introduce %s → %s\n", nt, joinSyms(syms[1:]))
+					changed = true
+				}
 			}
 		}
-		return ng
+		ng.P = newP2
+		if !changed {
+			break
+		}
 	}
-
+	return ng
 }
 
-
-//verification iscnf
+// verification: is CNF
 func (g *Grammar) IsCNF() bool {
 	for _, prods := range g.P {
 		for _, rhs := range prods {
 			syms := parseRHS(rhs)
-			switch len(syms){
-			case 1: 
-			if !g.VT[syms[0]]{
+			switch len(syms) {
+			case 1:
+				if !g.VT[syms[0]] {
+					return false
+				}
+			case 2:
+				if !g.VN[syms[0]] || !g.VN[syms[1]] {
+					return false
+				}
+			default:
 				return false
-				// if that was a unit production and not cnf
-			}
-		case 2:
-			if !g.VN[syms[0]] || ! g.VN[syms[1]]{
-				return false
-				//should be two nonterminals
-			}
-		default:
-			return false
 			}
 		}
 	}
+	return true
 }
 
-// running all 5 steps tep by step
-func ConvertToCNF(g *Grammar) *Grammar{
+// running all 5 steps step by step
+func ConvertToCNF(g *Grammar) {
 	g.Print("original grammar")
 	g1 := g.Step1()
 	g1.Print("done step 1")
@@ -510,20 +500,17 @@ func ConvertToCNF(g *Grammar) *Grammar{
 	g4.Print("done step 4")
 
 	g5 := g4.Step5()
-	g5.Print("final homsky normal form")
+	g5.Print("final Chomsky Normal Form")
 
-	//final check
-	if g5.IsCNF(){
-		fmt.Println{"\n is valid chomsky normal form"}
-	}
-	else{
-		fmt.Println("\n there is a mistake, it does not comply toh the chomsky normal form")
+	// final check
+	if g5.IsCNF() {
+		fmt.Println("\n is valid Chomsky Normal Form")
+	} else {
+		fmt.Println("\n there is a mistake, it does not comply with the Chomsky Normal Form")
 	}
 }
 
-
-
-//main
+// main
 func main() {
 	fmt.Println("\n\nVariant 14")
 	variant := NewGrammar(
@@ -540,13 +527,10 @@ func main() {
 	)
 	ConvertToCNF(variant)
 
-
-
-// bonus 
-// for that i took the example from the pdf 
-
-fmt.Printls("\n\n buns part: ")
-pdfExample := NewGrammar(
+	// bonus
+	// for that i took the example from the pdf
+	fmt.Println("\n\n bonus part: ")
+	pdfExample := NewGrammar(
 		[]string{"S", "A", "B", "C", "D"},
 		[]string{"a", "b"},
 		"S",
