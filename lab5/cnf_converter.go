@@ -341,7 +341,69 @@ func (g *Grammar) Step3() *Grammar {
 
 //step 4 eliminating inaccessible symbols
 func (g *Grammar) Step4() *Grammar {
-	productive := make(map)
+	productive := make(map[string]bool)
+	for t := range g.VT {
+		productive[t] true 
+	}
+	for changed := true; changed; {
+		changed = false 
+		for lhs, prods := range g.P {
+			if productive[lhs] {
+				continue
+			}
+
+			for _, rhs := range prods {
+				allProd := true
+				for _, s := range parseRHS(rhs) {
+					if !productive[s] {
+						allProd = false
+						break
+					}
+				}
+				if allProd {
+					productive[lhs] = true
+					changed = true
+					break
+				}
+			}
+		}
+	}
+	var nonProd []stringfor nt := range g.VN {
+		if !productive[nt] {
+			nonProd = append(nonProd, nt)		
+		}
+	}
+	sort.Strings(nonProd)
+	if len(nonProd) == 0 {
+		fmt.Println("non-productive: {}")
+
+	}
+	else{
+		fmt.Printf("non-productive: { %s }\n", strings.Join(nonProd, ", "))
+	}
+
+	ng := g.Clone()
+	for _, nt := range nonProd {
+		delete(ng.VN, nt)
+		delete(ng.P, nt)
+	}
+	for lhs, prods := range ng.P {
+		var kept []string 
+		for _, rhs := range prods {
+			ok := true
+			for _, s := range parseRHS(rhs) {
+				if !productive[s] {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				kept = append(kept, rhs)
+			}
+		}
+		ng.P[lhs] = kept
+	}
+	return ng
 }
 
 //step 5 convert to chomsky normal form
