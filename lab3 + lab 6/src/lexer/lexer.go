@@ -15,7 +15,7 @@ var (
 	reQuoted      = regexp.MustCompile(`^".*"$`)
 )
 
-// Lexer holds the DFA input buffer and cursor state
+// lexer holds the DFA input buffer and cursor state
 type Lexer struct {
 	input  []rune
 	pos    int
@@ -24,7 +24,7 @@ type Lexer struct {
 	tokens []Token
 }
 
-// New creates a Lexer for the given HTTP request string
+
 func New(input string) *Lexer {
 	return &Lexer{
 		input: []rune(input),
@@ -59,7 +59,7 @@ func (l *Lexer) emit(t TokenType, value string, line, col int) {
 	l.tokens = append(l.tokens, Token{Type: t, Value: value, Line: line, Col: col})
 }
 
-// Tokenise runs the lexer and returns all tokens
+// tokenise runs the lexer and returns all tokens
 func (l *Lexer) Tokenise() []Token {
 	l.lexRequestLine()
 

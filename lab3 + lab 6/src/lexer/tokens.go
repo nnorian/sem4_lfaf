@@ -2,11 +2,11 @@ package lexer
 
 import "fmt"
 
-// TokenType categorises each lexical unit
+
 type TokenType int
 
 const (
-	// request line
+
 	TOKEN_METHOD TokenType = iota
 	TOKEN_PATH
 	TOKEN_HTTP_VERSION
@@ -16,18 +16,18 @@ const (
 	TOKEN_AMPERSAND
 	TOKEN_EQUALS
 
-	// headers
+	
 	TOKEN_HEADER_NAME
 	TOKEN_COLON
 	TOKEN_HEADER_VALUE
 
-	// typed literal values
+	
 	TOKEN_INTEGER
 	TOKEN_FLOAT
 	TOKEN_BOOLEAN
 	TOKEN_QUOTED_STRING
 
-	// structure
+	
 	TOKEN_UNKNOWN
 	TOKEN_EOF
 )
@@ -59,7 +59,7 @@ func (t TokenType) String() string {
 	return "UNKNOWN"
 }
 
-// Token represents a single lexical unit with source position
+
 type Token struct {
 	Type  TokenType
 	Value string
